@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI-Powered Attendance System</title>
+
+  <!-- SDK references (kept as in your original file) -->
+  <script src="/_sdk/element_sdk.js" defer></script>
+  <script src="/_sdk/data_sdk.js" defer></script>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com" defer></script>
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-gray-50 min-h-full">
+
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 shadow-lg">
+    <div class="max-w-7xl mx-auto px-6 py-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 id="main-title" class="text-2xl font-bold text-white">Smart Attendance System</h1>
+            <p id="subtitle" class="text-blue-200 text-sm">AI-Powered Facial Recognition System</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-6">
+          <div class="flex items-center space-x-2 text-sm text-blue-200">
+            <div class="status-indicator bg-green-400"></div><span id="system-status">System Online</span>
+          </div>
+          <div class="text-right text-blue-200">
+            <div id="current-date" class="text-sm font-medium"></div>
+            <div id="current-time" class="text-xs"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="max-w-7xl mx-auto px-6 pt-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-1">
+      <div class="flex space-x-1">
+        <button id="tab-quick-attendance" class="flex-1 px-4 py-2 text-sm font-medium rounded-md bg-green-600 text-white transition-colors"> ⚡ Quick Attendance </button>
+        <button id="tab-dashboard" class="flex-1 px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-800 transition-colors"> 📊 Dashboard </button>
+        <button id="tab-register" class="flex-1 px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-800 transition-colors"> 👤 Register Student </button>
+        <button id="tab-students" class="flex-1 px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-800 transition-colors"> 📋 All Students </button>
+        <button id="tab-attendance" class="flex-1 px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-800 transition-colors"> ✅ Attendance Records </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Quick Attendance View -->
+    <div id="quick-attendance-view" class="view-content">
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+          <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
+            <h2 class="text-xl font-bold text-white">Quick Attendance</h2>
+            <p class="text-green-100 text-sm">Instant face scan for attendance</p>
+          </div>
+          <div class="p-6">
+            <!-- Camera Section -->
+            <div class="camera-frame rounded-lg aspect-[4/3] relative overflow-hidden mb-6">
+              <video id="quick-video" class="w-full h-full object-cover rounded-lg" autoplay muted playsinline style="display: none;"></video>
+              <canvas id="quick-canvas" class="absolute top-0 left-0 w-full h-full" style="display: none;"></canvas>
+              <div id="quick-camera-placeholder" class="w-full h-full bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center">
+                <div class="text-center text-white">
+                  <svg class="w-20 h-20 mx-auto mb-4 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                  </svg>
+                  <p class="text-lg font-medium">Ready for Attendance</p>
+                  <p class="text-sm opacity-75">Click to start face scanning</p>
+                </div>
+              </div>
+              <div id="quick-scanning-line" class="scanning-line" style="display: none;"></div>
+              <div id="quick-face-detection-box" class="absolute border-2 border-green-400 rounded" style="display: none;"></div>
+              <div id="quick-status-overlay" class="absolute bottom-4 left-0 right-0 text-center" style="display: none;">
+                <div class="inline-block bg-black bg-opacity-60 px-4 py-2 rounded-full">
+                  <p id="quick-status-text" class="text-white text-sm font-medium">Scanning for faces...</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="space-y-4">
+              <button id="quick-camera-btn" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-4 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-md text-lg"> Start Quick Attendance </button>
+
+              <!-- Manual Entry Option -->
+              <div class="border-t pt-4">
+                <p class="text-center text-gray-500 text-sm mb-4">Or mark attendance manually</p>
+                <div class="flex space-x-2">
+                  <input type="text" id="quick-student-name" placeholder="Enter student name" class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                  <button id="manual-attendance-btn" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"> Mark Present </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Today's Attendance Summary -->
+            <div class="mt-6 bg-gray-50 rounded-lg p-4">
+              <h3 class="font-semibold text-gray-800 mb-3">Today's Attendance</h3>
+              <div class="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p class="text-2xl font-bold text-green-600" id="today-present">0</p>
+                  <p class="text-sm text-gray-500">Present</p>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-blue-600" id="today-total">0</p>
+                  <p class="text-sm text-gray-500">Total</p>
+                </div>
+                <div>
+                  <p class="text-2xl font-bold text-purple-600" id="today-percentage">0%</p>
+                  <p class="text-sm text-gray-500">Rate</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Quick Attendance -->
+            <div class="mt-6">
+              <h3 class="font-semibold text-gray-800 mb-3">Recent Check-ins</h3>
+              <div id="quick-attendance-list" class="space-y-2 max-h-60 overflow-y-auto">
+                <div class="text-center text-gray-500 py-4">
+                  <p class="text-sm">No attendance marked yet today</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="view-content" style="display: none;">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500 text-sm font-medium">Total Present</p>
+              <p class="text-3xl font-bold text-gray-800 mt-2">142</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="mt-4"><span class="text-green-600 text-sm font-medium">↑ 12% from yesterday</span></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500 text-sm font-medium">Absent</p>
+              <p class="text-3xl font-bold text-gray-800 mt-2">8</p>
+            </div>
+            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="mt-4"><span class="text-red-600 text-sm font-medium">↓ 3% from yesterday</span></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500 text-sm font-medium">Late Arrivals</p>
+              <p class="text-3xl font-bold text-gray-800 mt-2">5</p>
+            </div>
+            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="mt-4"><span class="text-yellow-600 text-sm font-medium">Same as yesterday</span></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500 text-sm font-medium">Attendance Rate</p>
+              <p class="text-3xl font-bold text-gray-800 mt-2">94.7%</p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="mt-4"><span class="text-green-600 text-sm font-medium">↑ 2.3% from last week</span></div>
+        </div>
+      </div>
+
+      <!-- Camera and Recent Activity -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Camera Feed -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4">
+              <h2 class="text-xl font-bold text-white">Live Camera Feed</h2>
+              <p class="text-blue-100 text-sm">Real-time facial recognition</p>
+            </div>
+            <div class="p-6">
+              <div class="camera-frame rounded-lg aspect-[3/4] relative overflow-hidden">
+                <video id="video" class="w-full h-full object-cover rounded-lg" autoplay muted playsinline style="display: none;"></video>
+                <canvas id="canvas" class="absolute top-0 left-0 w-full h-full" style="display: none;"></canvas>
+                <div id="camera-placeholder" class="w-full h-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center">
+                  <div class="text-center text-white">
+                    <svg class="w-16 h-16 mx-auto mb-4 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    <p class="text-sm font-medium">Camera Ready</p>
+                    <p class="text-xs opacity-75">Click to start recognition</p>
+                  </div>
+                </div>
+                <div id="scanning-line" class="scanning-line" style="display: none;"></div>
+                <div id="face-detection-box" class="absolute border-2 border-green-400 rounded" style="display: none;"></div>
+                <div id="status-overlay" class="absolute bottom-4 left-0 right-0 text-center" style="display: none;">
+                  <div class="inline-block bg-black bg-opacity-60 px-4 py-2 rounded-full">
+                    <p id="status-text" class="text-white text-sm font-medium">Scanning for faces...</p>
+                  </div>
+                </div>
+              </div>
+              <button id="recognition-btn" class="w-full mt-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold py-3 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all shadow-md"> Start Camera </button>
+              <div id="camera-error" class="mt-2 text-red-600 text-sm text-center" style="display: none;">Camera access denied or not available</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="lg:col-span-2">
+          <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="bg-gradient-to-r from-slate-700 to-slate-900 px-6 py-4">
+              <h2 class="text-xl font-bold text-white">Recent Check-ins</h2>
+              <p class="text-slate-300 text-sm">Latest attendance records</p>
+            </div>
+            <div class="p-6">
+              <div id="activity-list" class="space-y-4">
+                <!-- Sample items (may be replaced by real data) -->
+                <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200 success-animation">
+                  <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">JD</div>
+                    <div>
+                      <p class="font-semibold text-gray-800">John Doe</p>
+                      <p class="text-sm text-gray-500">Employee ID: EMP-2024-001</p>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-medium text-green-600">✓ Checked In</p>
+                    <p class="text-xs text-gray-500">09:15 AM</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">SM</div>
+                    <div>
+                      <p class="font-semibold text-gray-800">Sarah Miller</p>
+                      <p class="text-sm text-gray-500">Employee ID: EMP-2024-002</p>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-medium text-green-600">✓ Checked In</p>
+                    <p class="text-xs text-gray-500">09:12 AM</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">MJ</div>
+                    <div>
+                      <p class="font-semibold text-gray-800">Michael Johnson</p>
+                      <p class="text-sm text-gray-500">Employee ID: EMP-2024-003</p>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-medium text-yellow-600">⚠ Late Arrival</p>
+                    <p class="text-xs text-gray-500">09:45 AM</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">EB</div>
+                    <div>
+                      <p class="font-semibold text-gray-800">Emily Brown</p>
+                      <p class="text-sm text-gray-500">Employee ID: EMP-2024-004</p>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-medium text-green-600">✓ Checked In</p>
+                    <p class="text-xs text-gray-500">08:55 AM</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">DW</div>
+                    <div>
+                      <p class="font-semibold text-gray-800">David Wilson</p>
+                      <p class="text-sm text-gray-500">Employee ID: EMP-2024-005</p>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-medium text-green-600">✓ Checked In</p>
+                    <p class="text-xs text-gray-500">08:50 AM</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Registration View -->
+    <div id="register-view" class="view-content" style="display: none;">
+      <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+          <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
+            <h2 class="text-xl font-bold text-white">Student Registration</h2>
+            <p class="text-green-100 text-sm">Register new student with face capture</p>
+          </div>
+          <div class="p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Registration Form -->
+              <div>
+                <form id="registration-form" class="space-y-4">
+                  <div>
+                    <label for="student-id" class="block text-sm font-medium text-gray-700 mb-1">Student ID</label>
+                    <input type="text" id="student-id" name="student_id" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter student ID">
+                  </div>
+
+                  <div>
+                    <label for="student-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="student-name" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter full name">
+                  </div>
+
+                  <div>
+                    <label for="student-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="student-email" name="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter email address">
+                  </div>
+
+                  <div>
+                    <label for="student-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <input type="tel" id="student-phone" name="phone" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter phone number">
+                  </div>
+
+                  <div>
+                    <label for="student-course" class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                    <select id="student-course" name="course" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                      <option value="">Select Course</option>
+                      <option value="Computer Science">Computer Science</option>
+                      <option value="Information Technology">Information Technology</option>
+                      <option value="Electronics">Electronics</option>
+                      <option value="Mechanical">Mechanical</option>
+                      <option value="Civil">Civil</option>
+                      <option value="Business Administration">Business Administration</option>
+                    </select>
+                  </div>
+
+                  <div class="pt-4">
+                    <button type="submit" id="register-btn" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-md disabled:opacity-50"> Register Student </button>
+                  </div>
+                </form>
+                <div id="registration-message" class="mt-4 text-center" style="display: none;"></div>
+              </div>
+
+              <!-- Face Capture -->
+              <div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Face Capture</h3>
+                <div class="camera-frame rounded-lg aspect-[3/4] relative overflow-hidden mb-4">
+                  <video id="reg-video" class="w-full h-full object-cover rounded-lg" autoplay muted playsinline style="display: none;"></video>
+                  <canvas id="reg-canvas" class="absolute top-0 left-0 w-full h-full" style="display: none;"></canvas>
+                  <div id="reg-camera-placeholder" class="w-full h-full bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center">
+                    <div class="text-center text-white">
+                      <svg class="w-16 h-16 mx-auto mb-4 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                      </svg>
+                      <p class="text-sm font-medium">Camera Ready</p>
+                      <p class="text-xs opacity-75">Click to capture face</p>
+                    </div>
+                  </div>
+                  <div id="reg-face-detection-box" class="absolute border-2 border-green-400 rounded" style="display: none;"></div>
+                </div>
+
+                <div class="space-y-2">
+                  <button id="reg-camera-btn" class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors"> Start Camera </button>
+                  <button id="capture-face-btn" class="w-full bg-green-600 text-white font-semibold py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50" disabled> Capture Face </button>
+                </div>
+
+                <div id="face-capture-status" class="mt-2 text-sm text-center text-gray-600"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Students List View -->
+    <div id="students-view" class="view-content" style="display: none;">
+      <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4">
+          <h2 class="text-xl font-bold text-white">Registered Students</h2>
+          <p class="text-purple-100 text-sm">All registered students in the system</p>
+        </div>
+        <div class="p-6">
+          <div id="students-list" class="space-y-4">
+            <div class="text-center text-gray-500 py-8">
+              <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
+              <p>No students registered yet</p>
+              <p class="text-sm">Register students to see them here</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance Records View -->
+    <div id="attendance-view" class="view-content" style="display: none;">
+      <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-orange-600 to-red-600 px-6 py-4">
+          <h2 class="text-xl font-bold text-white">Attendance Records</h2>
+          <p class="text-orange-100 text-sm">Daily attendance tracking</p>
+        </div>
+        <div class="p-6">
+          <div id="attendance-list" class="space-y-4">
+            <div class="text-center text-gray-500 py-8">
+              <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <p>No attendance records yet</p>
+              <p class="text-sm">Start face recognition to track attendance</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- App script -->
+  <script src="app.js" defer></script>
+
+  <!-- Cloudflare-style iframe injector preserved from original (kept as-is) -->
+  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9985cf8d9695c51e',t:'MTc2MjEwOTM1NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+
+</body>
+</html>
